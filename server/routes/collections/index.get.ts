@@ -20,7 +20,6 @@ export default defineEventHandler(async () => {
     const res = (await kv.getItems((await kv.getKeys(`collection`)))).sort((a, b) => dateComparison(a.value.created_at, b.value.created_at))
         .map((v, i) => ({
             id: v.key,
-            index: i,
             ...(v.value as { label: string; summary: string; created_at: string; content: string })
         }))
     await delay(100)

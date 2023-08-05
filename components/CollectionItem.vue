@@ -9,14 +9,16 @@ const { collection, index } = defineProps<{
 }>()
 
 const activeCollection = useCollection();
+const changeFromWatchLabel = ref(false);
+const changeFromWatchContent = ref(false);
 
 watch(
-    () => collection.content,
+    () => collection?.content,
     () => {
+        // if (!changeFromWatchContent.value) {
         const regex = /<h1.*?>(.*?)<\/h1>/;
         let m;
         if ((m = regex.exec(collection.content)) !== null) {
-            // The result can be accessed through the `m`-variable.
             collection.label = m[1]
         }
     }
@@ -25,7 +27,13 @@ watch(
 watchDebounced(
     () => collection.label,
     () => {
-        const { content, ...data } = collection;
+        const { content: _, ...data } = collection;
+        const regex = /<h1.*?>(.*?)<\/h1>/;
+        let m: RegExpExecArray | null = null;
+        if ((m = regex.exec(collection.content)) !== null) {
+            const content = collection.content.replace(m[1], collection.label)
+            collection.content = content;
+        }
         $fetch(`/collections/${collection.id}`, {
             method: 'PUT',
             body: data

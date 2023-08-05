@@ -1,9 +1,6 @@
 <template>
-    <EditorContent :editor="editor" />
+    <EditorContent :class="{ 'animate-pulse': loading }" :editor="editor" />
     <SparklesIcon class="w-6 h-6 absolute top-10 right-10 text-slate-800" :class="{ 'animate-pulse': saving }" />
-    <div v-show="loading" class="inset-0 absolute bg-slate-300/50 backdrop-blur-md flex items-center justify-center">
-        <h1 class="text-4xl text-slate-700 animate-pulse">Loading ...</h1>
-    </div>
 </template>
 
 <script setup lang="ts">
@@ -59,7 +56,6 @@ let editor = useEditor({
         }),
         Placeholder.configure({
             placeholder: ({ node }) => {
-                console.log(node.type.name)
                 if (node.type.name === 'heading') {
                     return 'What\'s the title?'
                 }
@@ -86,6 +82,21 @@ let editor = useEditor({
             lowlight,
         }),
     ],
+    onCreate: () => {
+        const index = +`${window.localStorage.getItem('active_collection_index')}` ?? 0 as number;
+        if (collections.value[index]?.content === undefined || collections.value[index].content === 'Content ...') {
+            loading.value = true
+            $fetch(`/collections/data/${collection.value.id}`).then((res) => {
+                if (res?.content) {
+                    collections.value[index].content = res.content;
+                    editor.value?.commands.setContent(collections.value[index].content as Content, false);
+                }
+                loading.value = false
+            })
+        } else {
+            editor.value?.commands.setContent(collections.value[index].content as Content, false);
+        }
+    },
     onUpdate: ({ editor }) => {
         body.value = editor?.getHTML();
     },
@@ -96,47 +107,44 @@ let editor = useEditor({
     },
 });
 
-onMounted(() => {
-    if (collections.value[collection.value.index]?.content === undefined || collections.value[collection.value.index].content === 'Content ...') {
-        loading.value = true
-        $fetch(`/collections/data/${collection.value.id}`).then((res) => {
-            collections.value[collection.value.index].content = res?.content ?? 'Content ...';
-            editor.value?.commands.setContent(collections.value[collection.value.index].content as Content, false);
-            loading.value = false
-        })
-    } else {
-        editor.value?.commands.setContent(collections.value[collection.value.index].content as Content, false);
-    }
-})
+// Whenever Content Change it runs
+// watch(() => collections.value[collection.value.index].content, (v) => {
+//     console.log("Updating whenever the content changes");
+//     editor.value?.commands.setContent(v as Content, false);
+// })
 
 // When our Tab Changes
-watch(() => collection.value.id, () => {
+watch(() => collection.value.index, async () => {
     if (collections.value[collection.value.index]?.content === undefined || collections.value[collection.value.index].content === 'Content ...') {
         loading.value = true
-        $fetch(`/collections/data/${collection.value.id}`).then((res) => {
-            collections.value[collection.value.index].content = res?.content ?? 'Content ...';
-            loading.value = false
-        })
+        const res = await $fetch(`/collections/data/${collection.value.id}`)
+        if (res?.content) {
+            collections.value[collection.value.index].content = res.content
+            editor.value?.commands.setContent(collections.value[collection.value.index].content as Content, false);
+        }
+        loading.value = false
     } else {
         editor.value?.commands.setContent(collections.value[collection.value.index].content as Content, false);
     }
 });
 
-watchDebounced(() => body.value, (v) => {
-    console.log(collection.value)
-    $fetch(`/collections/data/${collection.value.id}`, {
-        method: 'PUT',
-        body: v,
-    }).then(() => {
-        console.log("Succefully updated content", v);
-        saving.value = false
-    }).catch((err) => {
-        console.log("ERROR: ", err)
-        saving.value = false;
-    })
+// Runs only when index changes
+watchDebounced(() => collections.value[collection.value.index]?.content, (v, p) => {
+    if (p !== undefined)
+        $fetch(`/collections/data/${collection.value.id}`, {
+            method: 'PUT',
+            body: v,
+        }).then(() => {
+            console.log("Succefully updated content", v);
+            saving.value = false
+        }).catch((err) => {
+            console.log("ERROR: ", err)
+            saving.value = false;
+        })
+    if (!editor.value?.isFocused) editor.value?.commands.setContent(v, false);
 }, {
     onTrigger: () => saving.value = true,
-    debounce: 100,
+    debounce: 1000,
 })
 </script>
 

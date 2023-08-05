@@ -29,10 +29,11 @@ const newCollection = async () => {
 		id,
 		label,
 		summary: 'Summary ...',
-		index: collections.value.length - 1,
+		index: collections.value.length,
 		content: `${label}`
 	}
 	collections.value?.push(value);
+	collection.value = { ...collections.value[collections.value.length - 1], index: collections.value.length - 1 };
 	const { data } = await useFetch(`/collections/${id}`, {
 		method: 'PUT',
 		body: value
