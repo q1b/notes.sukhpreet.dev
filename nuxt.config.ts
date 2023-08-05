@@ -2,6 +2,9 @@
 export default defineNuxtConfig({
 	modules: ["@nuxtjs/tailwindcss", "@pinia/nuxt"],
 	// Define storage used in API routes with useStorage()
+	experimental: {
+		typedPages: true,
+	},
 	vite: {
 		vue: {
 			script: {
