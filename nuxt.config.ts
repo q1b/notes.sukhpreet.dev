@@ -19,7 +19,14 @@ export default defineNuxtConfig({
 				driver: "cloudflare-kv-binding",
 				binding: "NOTES",
 			},
-		}
+		},
+		// Overwrite notes storage in development using FS
+		devStorage: {
+			notes: {
+				driver: "fs",
+				base: "./.data/notes",
+			},
+		},
 	},
 	devtools: false,
 	components: [

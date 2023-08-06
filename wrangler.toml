@@ -11,7 +11,7 @@ account_id = "ca4f18a2b8408ea85a45f3f6099155eb"
 route = "notes.q1b.workers.dev/*"
 
 kv_namespaces = [
-  { binding = "NOTES", id = "6160f9cee97d46e58233a6705d80cdef"  },
+  { binding = "NOTES", id = "6160f9cee97d46e58233a6705d80cdef", preview_id = "431c05f14c3b45c7ac312bc49da10e6b" }
 ]
 
 [site]

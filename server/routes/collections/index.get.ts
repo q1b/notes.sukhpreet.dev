@@ -22,6 +22,5 @@ export default defineEventHandler(async () => {
             id: v.key,
             ...(v.value as { label: string; summary: string; created_at: string; content: string })
         }))
-    await delay(100)
     return res
 })
